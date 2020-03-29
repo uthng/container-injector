@@ -2,17 +2,14 @@ package sidecar
 
 import (
 	//"errors"
+	"encoding/json"
 	"fmt"
 	"strings"
+
 	//jsonpatch "github.com/evanphx/json-patch"
 	"github.com/spf13/cast"
 
 	corev1 "k8s.io/api/core/v1"
-)
-
-const (
-	AnnotationPrefixEnv = "container-injector.uthng.me/env"
-	AnnotationPrefixVol = "container-injector.uthng.me/vol"
 )
 
 // Container defines the container to be injected in the pod
@@ -191,7 +188,7 @@ func (c *Container) Patch() {
 		[]corev1.Container{container},
 		"/spec/containers")...)
 
-	fmt.Printf("%+v\n", c.Patches)
+	//fmt.Printf("%+v\n", c.Patches)
 }
 
 //
@@ -215,6 +212,11 @@ func (c *Container) createContainer() (corev1.Container, error) {
 		return corev1.Container{}, err
 	}
 
+	volumeMounts, err := c.parseAnnotationsVolumeMounts()
+	if err != nil {
+		return corev1.Container{}, err
+	}
+
 	return corev1.Container{
 		Name:            c.Name,
 		Image:           c.ImageName,
@@ -222,7 +224,7 @@ func (c *Container) createContainer() (corev1.Container, error) {
 		Env:             envs,
 		//Resources:       resources,
 		//SecurityContext: a.securityContext(),
-		//VolumeMounts:    volumeMounts,
+		VolumeMounts: volumeMounts,
 		//Lifecycle:       &lifecycle,
 		Command: command,
 		Args:    args,
@@ -233,10 +235,10 @@ func (c *Container) parseAnnotationsEnvVars() ([]corev1.EnvVar, error) {
 	var envs []corev1.EnvVar
 
 	for k, v := range c.Pod.Annotations {
-		if strings.HasPrefix(k, AnnotationPrefixEnv+"-") {
+		if strings.HasPrefix(k, AnnotationContainerEnv+"-") {
 			var envName string
 
-			_, err := fmt.Sscanf(k, AnnotationPrefixEnv+"-%s", &envName)
+			_, err := fmt.Sscanf(k, AnnotationContainerEnv+"-%s", &envName)
 			if err != nil {
 				return nil, err
 			}
@@ -249,6 +251,40 @@ func (c *Container) parseAnnotationsEnvVars() ([]corev1.EnvVar, error) {
 	}
 
 	return envs, nil
+}
+
+func (c *Container) parseAnnotationsVolumeMounts() ([]corev1.VolumeMount, error) {
+	var volumeMounts []corev1.VolumeMount
+
+	for k, v := range c.Pod.Annotations {
+		if strings.HasPrefix(k, AnnotationContainerVolumeMount+"-") {
+			var volumeName string
+
+			_, err := fmt.Sscanf(k, AnnotationContainerVolumeMount+"-%s", &volumeName)
+			if err != nil {
+				return nil, err
+			}
+
+			if json.Valid([]byte(v)) {
+				volM := corev1.VolumeMount{}
+
+				err := json.Unmarshal([]byte(v), &volM)
+				if err != nil {
+					return nil, err
+				}
+
+				volM.Name = volumeName
+				volumeMounts = append(volumeMounts, volM)
+			} else {
+				volumeMounts = append(volumeMounts, corev1.VolumeMount{
+					Name:      volumeName,
+					MountPath: v,
+				})
+			}
+		}
+	}
+
+	return volumeMounts, nil
 }
 
 //func (c *Container) securityContext() *corev1.SecurityContext {

@@ -9,7 +9,8 @@ import (
 	"testing"
 
 	//jsonpatch "github.com/evanphx/json-patch"
-	"github.com/stretchr/testify/assert"
+	//"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -77,31 +78,20 @@ func TestNewContainer(t *testing.T) {
 
 			container, err := sidecar.NewContainer(pod)
 			if strings.HasPrefix(tc.name, "Err") {
-				assert.Equal(t, err.Error(), tc.result)
+				require.Equal(t, err.Error(), tc.result)
 				return
 			}
 
 			container.Patch()
 
-			assert.Nil(t, err)
-
-			//jsonContainers, err := json.Marshal(pod.Spec.Containers)
-			//assert.Nil(t, err)
-
-			//fmt.Printf("%+v\n", string(jsonContainers))
-
 			jsonPatch, err := json.Marshal(container.Patches[0])
-			assert.Nil(t, err)
-			//fmt.Printf("%+v\n", string(jsonPatch))
-
-			//patch, err := jsonpatch.CreateMergePatch(jsonPatch, jsonContainers)
-			//fmt.Printf("%+v\n", string(patch))
-			assert.JSONEq(t, tc.result.(string), string(jsonPatch))
+			require.Nil(t, err)
+			require.JSONEq(t, tc.result.(string), string(jsonPatch))
 		})
 	}
 }
 
-func TestCreateContainer(t *testing.T) {
+func TestCreateContainerEnvVar(t *testing.T) {
 	testCases := []struct {
 		name        string
 		annotations map[string]string
@@ -118,36 +108,24 @@ func TestCreateContainer(t *testing.T) {
 				"container-injector.uthng.me/env-ENV-NAME":   "env-name",
 				"container-injector.uthng.me/env-ENV_NAME_1": "env_name_1",
 			},
-			`
-{
-	"op": "add",
-	"path": "/spec/containers",
-	"value": [
-		{
-			"name": "sleep",
-			"image": "governmentpaas/curl-ssl",
-			"env": [
+			[]corev1.EnvVar{
 				{
-					"name": "ENVNAME",
-					"value": "envname"
+					Name:  "ENVNAME",
+					Value: "envname",
 				},
 				{
-					"name": "ENV_NAME",
-					"value": "env_name"
+					Name:  "ENV_NAME",
+					Value: "env_name",
 				},
 				{
-					"name": "ENV-NAME",
-					"value": "env-name"
+					Name:  "ENV-NAME",
+					Value: "env-name",
 				},
 				{
-					"name": "ENV_NAME_1",
-					"value": "env_name_1"
-				}
-			],
-			"resources": {}
-		}
-	]
-}`,
+					Name:  "ENV_NAME_1",
+					Value: "env_name_1",
+				},
+			},
 		},
 	}
 
@@ -161,26 +139,86 @@ func TestCreateContainer(t *testing.T) {
 
 			container, err := sidecar.NewContainer(pod)
 			if strings.HasPrefix(tc.name, "Err") {
-				assert.Equal(t, err.Error(), tc.result)
+				require.Equal(t, err.Error(), tc.result)
 				return
 			}
 
 			container.Patch()
 
-			assert.Nil(t, err)
+			jsonContainer, err := json.Marshal(container.Patches[0].Value.([]corev1.Container)[0])
+			require.Nil(t, err)
 
-			//jsonContainers, err := json.Marshal(pod.Spec.Containers)
-			//assert.Nil(t, err)
+			result := corev1.Container{}
+			err = json.Unmarshal(jsonContainer, &result)
+			require.Nil(t, err)
 
-			//fmt.Printf("%+v\n", string(jsonContainers))
+			require.ElementsMatch(t, tc.result, result.Env)
+		})
+	}
+}
 
-			jsonPatch, err := json.Marshal(container.Patches[0])
-			assert.Nil(t, err)
-			//fmt.Printf("%+v\n", string(jsonPatch))
+func TestCreateContainerVolumeMounts(t *testing.T) {
+	testCases := []struct {
+		name        string
+		annotations map[string]string
+		result      interface{}
+	}{
+		{
+			"OKContainerVolumeMounts",
+			map[string]string{
+				"container-injector.uthng.me/inject":                  "true",
+				"container-injector.uthng.me/name":                    "sleep",
+				"container-injector.uthng.me/image":                   "governmentpaas/curl-ssl",
+				"container-injector.uthng.me/volume-mount-gitconfig":  "/opt/gitconfig",
+				"container-injector.uthng.me/volume-mount-git-config": "/opt/git-config",
+				"container-injector.uthng.me/volume-mount-gitconfigjson": `
+{
+	"mountPath": "/opt/gitConfig",
+	"readOnly": true
+}`,
+			},
+			[]corev1.VolumeMount{
+				{
+					Name:      "gitconfig",
+					MountPath: "/opt/gitconfig",
+				},
+				{
+					Name:      "git-config",
+					MountPath: "/opt/git-config",
+				},
+				{
+					Name:      "gitconfigjson",
+					MountPath: "/opt/gitConfig",
+					ReadOnly:  true,
+				},
+			},
+		},
+	}
 
-			//patch, err := jsonpatch.CreateMergePatch(jsonPatch, jsonContainers)
-			//fmt.Printf("%+v\n", string(patch))
-			assert.JSONEq(t, tc.result.(string), string(jsonPatch))
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			pod := &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: tc.annotations,
+				},
+			}
+
+			container, err := sidecar.NewContainer(pod)
+			if strings.HasPrefix(tc.name, "Err") {
+				require.Equal(t, err.Error(), tc.result)
+				return
+			}
+
+			container.Patch()
+
+			jsonContainer, err := json.Marshal(container.Patches[0].Value.([]corev1.Container)[0])
+			require.Nil(t, err)
+
+			result := corev1.Container{}
+			err = json.Unmarshal(jsonContainer, &result)
+			require.Nil(t, err)
+
+			require.ElementsMatch(t, tc.result, result.VolumeMounts)
 		})
 	}
 }

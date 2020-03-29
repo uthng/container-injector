@@ -35,6 +35,23 @@ const (
 	// AnnotationContainerPullPolicy specifies the pull policy for container image.
 	AnnotationContainerPullPolicy = "container-injector.uthng.me/pull-policy"
 
+	// AnnotationContainerEnv specifies the environment variables and their values
+	// for the container. The name of the environment variables is the part after
+	// "container-injector.uthng.me/env-" such as "container-injector.uthng.me/env-TLS_SECRETS".
+	AnnotationContainerEnv = "container-injector.uthng.me/env"
+
+	// AnnotationContainerVolumeMount specifies the volume mount paths
+	// in the container. The name of the volumes is the part after
+	// "container-injector.uthng.me/volume-mount-" such as
+	//"container-injector.uthng.me/volume-mount-config".
+	AnnotationContainerVolumeMount = "container-injector.uthng.me/volume-mount"
+
+	// AnnotationContainerVolume specifies the volumes to mount
+	// in the pod. The name of the volumes is the part after
+	// "container-injector.uthng.me/volume-mount-" such as
+	//"container-injector.uthng.me/volume-mount-config".
+	AnnotationContainerVolume = "container-injector.uthng.me/volume"
+
 	// AnnotationContainerConfigMap is the name of the configuration map where  Container
 	// configuration file and templates can be found.
 	AnnotationContainerConfigMap = "container-injector.uthng.me/configmap"
