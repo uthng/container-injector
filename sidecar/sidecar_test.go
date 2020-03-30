@@ -209,7 +209,8 @@ func TestCreateContainerVolumeMounts(t *testing.T) {
 				return
 			}
 
-			container.Patch()
+			_, err = container.Patch()
+			require.Nil(t, err)
 
 			jsonContainer, err := json.Marshal(container.Patches[0].Value.([]corev1.Container)[0])
 			require.Nil(t, err)
@@ -219,6 +220,90 @@ func TestCreateContainerVolumeMounts(t *testing.T) {
 			require.Nil(t, err)
 
 			require.ElementsMatch(t, tc.result, result.VolumeMounts)
+		})
+	}
+}
+
+func TestCreateContainerVolumes(t *testing.T) {
+	testCases := []struct {
+		name        string
+		annotations map[string]string
+		result      interface{}
+	}{
+		{
+			"OKContainerVolumes",
+			map[string]string{
+				"container-injector.uthng.me/inject": "true",
+				"container-injector.uthng.me/name":   "sleep",
+				"container-injector.uthng.me/image":  "governmentpaas/curl-ssl",
+				"container-injector.uthng.me/volume-mount-gitconfigjson": `
+{
+	"mountPath": "/opt/gitConfig",
+	"readOnly": true
+}`,
+				"container-injector.uthng.me/volume-source-volsecret": `
+{
+	"secret": {
+		"secretName": "volsecret"
+	}
+}`,
+				"container-injector.uthng.me/volume-source-volconfigmap": `
+{
+	"configMap": {
+		"name": "volconfigmap"
+	}
+}`,
+			},
+			[]corev1.Volume{
+				{
+					Name: "volsecret",
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: "volsecret",
+						},
+					},
+				},
+				{
+					Name: "volconfigmap",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "volconfigmap",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			pod := &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: tc.annotations,
+				},
+			}
+
+			container, err := sidecar.NewContainer(pod)
+			if strings.HasPrefix(tc.name, "Err") {
+				require.Equal(t, err.Error(), tc.result)
+				return
+			}
+
+			_, err = container.Patch()
+			require.Nil(t, err)
+
+			var volumes []corev1.Volume
+			for _, v := range container.Patches {
+				if v.Path == "/spec/volumes" {
+					volumes = append(volumes, v.Value.([]corev1.Volume)...)
+				} else if v.Path == "/spec/volumes/-" {
+					volumes = append(volumes, v.Value.(corev1.Volume))
+				}
+			}
+
+			require.ElementsMatch(t, tc.result, volumes)
 		})
 	}
 }

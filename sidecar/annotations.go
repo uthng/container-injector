@@ -46,11 +46,11 @@ const (
 	//"container-injector.uthng.me/volume-mount-config".
 	AnnotationContainerVolumeMount = "container-injector.uthng.me/volume-mount"
 
-	// AnnotationContainerVolume specifies the volumes to mount
-	// in the pod. The name of the volumes is the part after
-	// "container-injector.uthng.me/volume-mount-" such as
-	//"container-injector.uthng.me/volume-mount-config".
-	AnnotationContainerVolume = "container-injector.uthng.me/volume"
+	// AnnotationContainerVolumeSource specifies the source of volumes to mount
+	// in the pod. The name of the volume source is the part after
+	// "container-injector.uthng.me/volume-source" such as
+	//"container-injector.uthng.me/volume-source-tlscert".
+	AnnotationContainerVolumeSource = "container-injector.uthng.me/volume-source"
 
 	// AnnotationContainerConfigMap is the name of the configuration map where  Container
 	// configuration file and templates can be found.

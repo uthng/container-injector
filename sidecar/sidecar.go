@@ -177,11 +177,23 @@ func NewContainer(pod *corev1.Pod) (*Container, error) {
 //}
 
 // Patch creates the necessary pod patches to inject the container.
-func (c *Container) Patch() {
+func (c *Container) Patch() ([]byte, error) {
+	var patches []byte
+
 	container, err := c.createContainer()
 	if err != nil {
-		return
+		return patches, err
 	}
+
+	volumes, err := c.parseAnnotationsVolumeSources()
+	if err != nil {
+		return patches, err
+	}
+
+	c.Patches = append(c.Patches, addVolumes(
+		c.Pod.Spec.Volumes,
+		volumes,
+		"/spec/volumes")...)
 
 	c.Patches = append(c.Patches, addContainers(
 		c.Pod.Spec.Containers,
@@ -189,6 +201,16 @@ func (c *Container) Patch() {
 		"/spec/containers")...)
 
 	//fmt.Printf("%+v\n", c.Patches)
+
+	// Generate the patch
+	if len(c.Patches) > 0 {
+		patches, err := json.Marshal(c.Patches)
+		if err != nil {
+			return patches, err
+		}
+	}
+
+	return patches, nil
 }
 
 //
@@ -285,6 +307,37 @@ func (c *Container) parseAnnotationsVolumeMounts() ([]corev1.VolumeMount, error)
 	}
 
 	return volumeMounts, nil
+}
+
+func (c *Container) parseAnnotationsVolumeSources() ([]corev1.Volume, error) {
+	var volumes []corev1.Volume
+
+	for k, v := range c.Pod.Annotations {
+		if strings.HasPrefix(k, AnnotationContainerVolumeSource+"-") {
+			var volumeName string
+
+			_, err := fmt.Sscanf(k, AnnotationContainerVolumeSource+"-%s", &volumeName)
+			if err != nil {
+				return nil, err
+			}
+
+			if !json.Valid([]byte(v)) {
+				return nil, fmt.Errorf("annotation for volume source must be json format")
+			}
+
+			vol := corev1.Volume{}
+
+			err = json.Unmarshal([]byte(v), &vol)
+			if err != nil {
+				return nil, err
+			}
+
+			vol.Name = volumeName
+			volumes = append(volumes, vol)
+		}
+	}
+
+	return volumes, nil
 }
 
 //func (c *Container) securityContext() *corev1.SecurityContext {
