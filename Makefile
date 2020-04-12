@@ -1,12 +1,14 @@
 # Command variables
 GO_BUILD 	= go build
 GO_PLUGIN 	= go build -buildmode=plugin
+GOBIN		= $(GOPATH)/bin
 INSTALL 	= /usr/bin/install
 MKDIR 		= mkdir -p
 RM 		= rm
 CP 		= cp
 DOCKER_COMPOSE ?= docker-compose
 DOCKER_COMPOSE_EXEC ?= docker-compose exec -T
+GOLANGCI-LINT = $(GOBIN)/golangci-lint
 
 # Optimization build processes
 #CPUS ?= $(shell nproc)
@@ -66,14 +68,14 @@ docker-test-unit: docker-stop
 	$(DOCKER_COMPOSE) down
 
 linters:
-	golangci-lint run ./...
+	$(GOLANGCI-LINT) run ./...
 
 fmt:
 	gofmt -s -l -w $(PROJECT_BUILD_SRCS)
 
 deps:
 	go get -u github.com/mitchellh/gox
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.24.0
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin v1.24.0
 
 clean:
 	-$(RM) -rf bin

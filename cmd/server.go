@@ -17,8 +17,6 @@ limitations under the License.
 package cmd
 
 import (
-	"context"
-	//"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -66,9 +64,6 @@ func init() {
 }
 
 func initServer(args []string) {
-	// Initialize app with gokit stuffs
-	ctx := context.Background()
-
 	errs := make(chan error)
 
 	// Set default verbosity
