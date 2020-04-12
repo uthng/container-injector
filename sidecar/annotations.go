@@ -24,7 +24,7 @@ const (
 	// to be executed when the container starts
 	AnnotationContainerArgs = "container-injector.uthng.me/args"
 
-	// AnnotationContainerInitFirst makes the initialization container the first container
+	// AnnotationContainerInitContainer makes the initialization container the first container
 	// to run when a pod starts. Default is last.
 	AnnotationContainerInitContainer = "container-injector.uthng.me/init-container"
 

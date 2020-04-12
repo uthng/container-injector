@@ -40,41 +40,41 @@ func addVolumes(target, volumes []corev1.Volume, base string) []patchOperation {
 	return result
 }
 
-func addVolumeMounts(target, mounts []corev1.VolumeMount, base string) []patchOperation {
-	var result []patchOperation
-	var value interface{}
+//func addVolumeMounts(target, mounts []corev1.VolumeMount, base string) []patchOperation {
+//var result []patchOperation
+//var value interface{}
 
-	first := len(target) == 0
+//first := len(target) == 0
 
-	for _, v := range mounts {
-		value = v
-		path := base
+//for _, v := range mounts {
+//value = v
+//path := base
 
-		if first {
-			first = false
-			value = []corev1.VolumeMount{v}
-		} else {
-			path = path + "/-"
-		}
+//if first {
+//first = false
+//value = []corev1.VolumeMount{v}
+//} else {
+//path = path + "/-"
+//}
 
-		result = append(result, patchOperation{
-			Op:    "add",
-			Path:  path,
-			Value: value,
-		})
-	}
+//result = append(result, patchOperation{
+//Op:    "add",
+//Path:  path,
+//Value: value,
+//})
+//}
 
-	return result
-}
+//return result
+//}
 
-func removeContainers(path string) []patchOperation {
-	var result []patchOperation
+//func removeContainers(path string) []patchOperation {
+//var result []patchOperation
 
-	return append(result, patchOperation{
-		Op:   "remove",
-		Path: path,
-	})
-}
+//return append(result, patchOperation{
+//Op:   "remove",
+//Path: path,
+//})
+//}
 
 func addContainers(target, containers []corev1.Container, base string) []patchOperation {
 	var result []patchOperation

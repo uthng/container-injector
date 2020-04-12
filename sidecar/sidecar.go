@@ -200,6 +200,11 @@ func (c *Container) Patch() ([]byte, error) {
 		[]corev1.Container{container},
 		"/spec/containers")...)
 
+	// Add annotations so that we know we're injected
+	c.Patches = append(c.Patches, updateAnnotations(
+		c.Pod.Annotations,
+		map[string]string{AnnotationContainerStatus: "injected"})...)
+
 	//fmt.Printf("%+v\n", c.Patches)
 
 	// Generate the patch
