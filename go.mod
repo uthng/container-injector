@@ -6,6 +6,7 @@ require (
 	github.com/evanphx/json-patch v4.2.0+incompatible
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/gorilla/mux v1.7.4
+	github.com/json-iterator/go v1.1.8
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/cast v1.3.1
 	github.com/spf13/cobra v0.0.6

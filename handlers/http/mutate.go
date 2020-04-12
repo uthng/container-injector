@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"k8s.io/api/admission/v1beta1"
+	"k8s.io/api/admission/v1"
 	//admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -47,8 +47,8 @@ func NewMutate(l *log.Logger) *Mutate {
 func (m *Mutate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var body []byte
 	var err error
-	var admReq v1beta1.AdmissionReview
-	var admResp v1beta1.AdmissionReview
+	var admReviewReq v1.AdmissionReview
+	var admReviewResp v1.AdmissionReview
 
 	// Check content-type which must be application/json
 	if ct := r.Header.Get("Content-Type"); ct != "application/json" {
@@ -79,7 +79,7 @@ func (m *Mutate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, _, err := deserializer().Decode(body, nil, &admReq); err != nil {
+	if _, _, err := deserializer().Decode(body, nil, &admReviewReq); err != nil {
 		m.logger.Errorw("Error to decode adminssion request", "err", err)
 
 		msg := fmt.Sprintf("Error decoding admission request: %s", err)
@@ -88,9 +88,9 @@ func (m *Mutate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	admResp.Response = m.mutate(admReq.Request)
+	admReviewResp.Response = m.mutate(admReviewReq.Request)
 
-	resp, err := json.Marshal(&admResp)
+	resp, err := json.Marshal(&admReviewResp)
 	if err != nil {
 		m.logger.Errorw("Error to marshal admission response", "err", err)
 
@@ -107,14 +107,14 @@ func (m *Mutate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // mutate takes an admission request and performs mutation if necessary,
 // returning the final API response.
-func (m *Mutate) mutate(req *v1beta1.AdmissionRequest) *v1beta1.AdmissionResponse {
+func (m *Mutate) mutate(req *v1.AdmissionRequest) *v1.AdmissionResponse {
 	// Decode the pod from the request
 	var pod corev1.Pod
 	if err := json.Unmarshal(req.Object.Raw, &pod); err != nil {
 		m.logger.Errorw("Could not unmarshal request to pod", "err", err)
 		m.logger.Debugf("Request Object Raw: %s", req.Object.Raw)
 
-		return &v1beta1.AdmissionResponse{
+		return &v1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: err.Error(),
 			},
@@ -122,7 +122,7 @@ func (m *Mutate) mutate(req *v1beta1.AdmissionRequest) *v1beta1.AdmissionRespons
 	}
 
 	// Build the basic response
-	resp := &v1beta1.AdmissionResponse{
+	resp := &v1.AdmissionResponse{
 		Allowed: true,
 		UID:     req.UID,
 	}
@@ -138,8 +138,9 @@ func (m *Mutate) mutate(req *v1beta1.AdmissionRequest) *v1beta1.AdmissionRespons
 
 	m.logger.Debugw("Checking namespaces...")
 
-	if pos := utils.SliceFindElemStr(ignoredNamespaces, req.Namespace); pos < 0 {
+	if pos := utils.SliceFindElemStr(ignoredNamespaces, req.Namespace); pos >= 0 {
 		err := fmt.Errorf("error with request namespace: cannot inject into system namespaces: %s", req.Namespace)
+		m.logger.Errorw("Error request namespace", "namespace", req.Namespace)
 		return admissionError(err)
 	}
 
@@ -160,7 +161,7 @@ func (m *Mutate) mutate(req *v1beta1.AdmissionRequest) *v1beta1.AdmissionRespons
 	}
 
 	resp.Patch = patch
-	patchType := v1beta1.PatchTypeJSONPatch
+	patchType := v1.PatchTypeJSONPatch
 	resp.PatchType = &patchType
 
 	return resp
@@ -197,8 +198,8 @@ func needInject(pod *corev1.Pod) (bool, error) {
 	return true, nil
 }
 
-func admissionError(err error) *v1beta1.AdmissionResponse {
-	return &v1beta1.AdmissionResponse{
+func admissionError(err error) *v1.AdmissionResponse {
+	return &v1.AdmissionResponse{
 		Result: &metav1.Status{
 			Message: err.Error(),
 		},
