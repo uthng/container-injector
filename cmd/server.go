@@ -82,7 +82,7 @@ func initServer(args []string) {
 	httpLogger.DisableColor()
 
 	// Initialize http server
-	httpServer := http.NewServer(ctx, serverAddr, serverCertFile, serverKeyFile, httpLogger)
+	httpServer := http.NewServer(serverAddr, serverCertFile, serverKeyFile, httpLogger)
 
 	// HTTP
 	go func() {

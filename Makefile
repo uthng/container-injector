@@ -73,6 +73,7 @@ fmt:
 
 deps:
 	go get -u github.com/mitchellh/gox
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.24.0
 
 clean:
 	-$(RM) -rf bin
