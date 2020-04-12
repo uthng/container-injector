@@ -141,6 +141,7 @@ func (m *Mutate) mutate(req *v1.AdmissionRequest) *v1.AdmissionResponse {
 	if pos := utils.SliceFindElemStr(ignoredNamespaces, req.Namespace); pos >= 0 {
 		err := fmt.Errorf("error with request namespace: cannot inject into system namespaces: %s", req.Namespace)
 		m.logger.Errorw("Error request namespace", "namespace", req.Namespace)
+
 		return admissionError(err)
 	}
 
