@@ -204,10 +204,7 @@ func (c *Container) Patch() ([]byte, error) {
 
 	// Generate the patch
 	if len(c.Patches) > 0 {
-		patches, err := json.Marshal(c.Patches)
-		if err != nil {
-			return patches, err
-		}
+		return json.Marshal(c.Patches)
 	}
 
 	return patches, nil
