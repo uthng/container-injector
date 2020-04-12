@@ -1,7 +1,11 @@
 # Command variables
+# Go env variables
+GOPATH	= $(shell go env GOPATH)
+GOBIN	= $(GOPATH)/bin
+
+# Bin variables
 GO_BUILD 	= go build
 GO_PLUGIN 	= go build -buildmode=plugin
-GOBIN		= $(GOPATH)/bin
 INSTALL 	= /usr/bin/install
 MKDIR 		= mkdir -p
 RM 		= rm
