@@ -1,0 +1,7 @@
+resources:
+  - deployment.yaml
+  - mutating-webhook.yaml
+  - service.yaml
+  - rbac.yaml
+
+namespace: container-injector

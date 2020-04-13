@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: certs-init
+spec:
+  # backoffLimit = 0 prevents job restarting forever on failure
+  backoffLimit: 0
+  template:
+    metadata:
+      annotations:
+        consul.hashicorp.com/connect-inject: "false"
+      labels:
+        app: container-injector
+        component: certs-init
+      name: certs-init
+    spec:
+      containers:
+      - name: certs-init
+        image: newrelic/k8s-webhook-cert-manager
+        command:
+        - /bin/sh
+        - -ec
+        - |
+          ./generate_certificate.sh --service container-injector \
+            --webhook container-injector.uthng.me \
+            --secret container-injector-webhook-certs \
+            --namespace ${NAMESPACE}
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+      restartPolicy: Never
+      serviceAccountName: certs-init
+

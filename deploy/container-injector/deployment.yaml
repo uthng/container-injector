@@ -1,0 +1,61 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: container-injector
+  labels:
+    app.kubernetes.io/name: container-injector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: container-injector
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: container-injector
+    spec:
+      serviceAccountName: "container-injector"
+      containers:
+        - name: container-injector
+          image: "uthng/container-injector:latest"
+          imagePullPolicy: IfNotPresent
+          args:
+            - server
+            - --addr
+            - :8443
+            - --cert
+            - /etc/webhook/certs/tls.crt
+            - --key
+            - /etc/webhook/certs/tls.key
+            - --verbosity
+            - "4"
+            - 2>&1
+          volumeMounts:
+          - name: webhook-certs
+            mountPath: /etc/webhook/certs
+            readOnly: true
+      volumes:
+      - name: webhook-certs
+        secret:
+          secretName: container-injector-webhook-certs
+          #livenessProbe:
+            #httpGet:
+              #path: /health/ready
+              #port: 8080
+              #scheme: HTTPS
+            #failureThreshold: 2
+            #initialDelaySeconds: 1
+            #periodSeconds: 2
+            #successThreshold: 1
+            #timeoutSeconds: 5
+          #readinessProbe:
+            #httpGet:
+              #path: /health/ready
+              #port: 8080
+              #scheme: HTTPS
+            #failureThreshold: 2
+            #initialDelaySeconds: 2
+            #periodSeconds: 2
+            #successThreshold: 1
+            #timeoutSeconds: 5

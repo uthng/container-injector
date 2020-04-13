@@ -1,0 +1,5 @@
+resources:
+  - rbac.yaml
+  - job.yaml
+
+namespace: container-injector
