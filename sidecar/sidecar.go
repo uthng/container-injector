@@ -4,6 +4,7 @@ import (
 	//"errors"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 
 	//jsonpatch "github.com/evanphx/json-patch"
@@ -223,12 +224,14 @@ func (c *Container) createContainer() (corev1.Container, error) {
 	var command []string
 	var args []string
 
+	re := regexp.MustCompile(`("[^"']+")|('[^"']+')|\S+`)
+
 	if c.Command != "" {
-		command = []string{c.Command}
+		command = re.FindAllString(c.Command, -1)
 	}
 
 	if c.Args != "" {
-		args = []string{c.Args}
+		args = re.FindAllString(c.Args, -1)
 	}
 
 	envs, err := c.parseAnnotationsEnvVars()

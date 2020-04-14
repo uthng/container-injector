@@ -307,7 +307,7 @@ func TestHandlerMutateInjection(t *testing.T) {
 					}),
 				},
 			},
-			`[{"op":"add","path":"/spec/volumes","value":[{"name":"volsecret","secret":{"secretName":"volsecret"}}]},{"op":"add","path":"/spec/containers/-","value":{"name":"curl-ssl","image":"govermentpaas/curl-ssl","command":["/bin/sh -ec echo 'hello world'"],"env":[{"name":"ENVNAME","value":"envname"}],"resources":{},"volumeMounts":[{"name":"gitconfig","mountPath":"/opt/gitconfig"}]}},{"op":"add","path":"/metadata/annotations/container-injector.uthng.me~1status","value":"injected"}]`,
+			`[{"op":"add","path":"/spec/volumes","value":[{"name":"volsecret","secret":{"secretName":"volsecret"}}]},{"op":"add","path":"/spec/containers/-","value":{"name":"curl-ssl","image":"govermentpaas/curl-ssl","command":["/bin/sh","-ec","echo","'hello world'"],"env":[{"name":"ENVNAME","value":"envname"}],"resources":{},"volumeMounts":[{"name":"gitconfig","mountPath":"/opt/gitconfig"}]}},{"op":"add","path":"/metadata/annotations/container-injector.uthng.me~1status","value":"injected"}]`,
 		},
 	}
 

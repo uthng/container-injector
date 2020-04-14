@@ -21,8 +21,8 @@ spec:
         - /bin/sh
         - -ec
         - |
-          ./generate_certificate.sh --service container-injector \
-            --webhook container-injector.uthng.me \
+          ./generate_certificate.sh --service container-injector-svc \
+            --webhook container-injector-mwc \
             --secret container-injector-webhook-certs \
             --namespace ${NAMESPACE}
         env:

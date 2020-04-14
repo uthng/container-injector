@@ -2,7 +2,7 @@
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: container-injector-cfg
+  name: container-injector-mwc
   labels:
     app.kubernetes.io/name: container-injector
 webhooks:
