@@ -19,7 +19,7 @@ spec:
       containers:
         - name: container-injector
           image: "uthng/container-injector:latest"
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           args:
             - server
             - --addr
@@ -31,6 +31,26 @@ spec:
             - --verbosity
             - "4"
             - 2>&1
+          livenessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8443
+              scheme: HTTPS
+            failureThreshold: 2
+            initialDelaySeconds: 1
+            periodSeconds: 2
+            successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8443
+              scheme: HTTPS
+            failureThreshold: 2
+            initialDelaySeconds: 2
+            periodSeconds: 2
+            successThreshold: 1
+            timeoutSeconds: 5
           volumeMounts:
           - name: webhook-certs
             mountPath: /etc/webhook/certs
@@ -39,23 +59,3 @@ spec:
       - name: webhook-certs
         secret:
           secretName: container-injector-webhook-certs
-          #livenessProbe:
-            #httpGet:
-              #path: /health/ready
-              #port: 8080
-              #scheme: HTTPS
-            #failureThreshold: 2
-            #initialDelaySeconds: 1
-            #periodSeconds: 2
-            #successThreshold: 1
-            #timeoutSeconds: 5
-          #readinessProbe:
-            #httpGet:
-              #path: /health/ready
-              #port: 8080
-              #scheme: HTTPS
-            #failureThreshold: 2
-            #initialDelaySeconds: 2
-            #periodSeconds: 2
-            #successThreshold: 1
-            #timeoutSeconds: 5

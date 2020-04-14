@@ -48,13 +48,18 @@ func (s *Server) Serve() error {
 	r := mux.NewRouter()
 
 	r.Handle("/mutate", s.mutate).Methods("POST")
-
+	r.HandleFunc("/health/ready", s.handleReady).Methods("GET")
 	http.Handle("/", accessControl(r))
 
 	return http.ListenAndServeTLS(s.addr, s.certFile, s.keyFile, nil)
 }
 
 ///////////// INTERNAL FUNCTIONS /////////////////
+
+func (s *Server) handleReady(w http.ResponseWriter, r *http.Request) {
+	// If we reached this point it means we served a TLS certificate.
+	w.WriteHeader(204)
+}
 
 func accessControl(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

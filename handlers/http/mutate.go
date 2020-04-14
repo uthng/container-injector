@@ -93,8 +93,6 @@ func (m *Mutate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	m.logger.Debugw("Admission review request", "request", admReviewReq)
-
 	admReviewResp.Response = m.mutate(admReviewReq.Request)
 
 	resp, err := json.Marshal(&admReviewResp)
@@ -107,7 +105,7 @@ func (m *Mutate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	m.logger.Debugw("Admission review response", "response", resp)
+	m.logger.Debugw("Admission review response", "response", string(resp))
 
 	if _, err := w.Write(resp); err != nil {
 		m.logger.Errorw("Error while writing response", "err", err)
@@ -154,7 +152,7 @@ func (m *Mutate) mutate(req *v1.AdmissionRequest) *v1.AdmissionResponse {
 		return admissionError(err)
 	}
 
-	m.logger.Infow("Init container to be injected...")
+	m.logger.Infow("Initializing container to be injected...")
 
 	container, err := sidecar.NewContainer(&pod)
 	if err != nil {
@@ -170,7 +168,8 @@ func (m *Mutate) mutate(req *v1.AdmissionRequest) *v1.AdmissionResponse {
 		return admissionError(err)
 	}
 
-	m.loggerInfow("Sending patches to update Pod...")
+	m.logger.Infow("Sending patches to update Pod...")
+
 	resp.Patch = patch
 	patchType := v1.PatchTypeJSONPatch
 	resp.PatchType = &patchType
