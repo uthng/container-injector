@@ -50,6 +50,9 @@ func (m *Mutate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var admReviewReq v1.AdmissionReview
 	var admReviewResp v1.AdmissionReview
 
+	m.logger.Infow("Request received. Checking request content...")
+	m.logger.Debugw("Request header", "header", r.Header)
+
 	// Check content-type which must be application/json
 	if ct := r.Header.Get("Content-Type"); ct != "application/json" {
 		m.logger.Errorw("Invalid content-type", "content-type", ct)
@@ -79,6 +82,8 @@ func (m *Mutate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	m.logger.Debugw("Request body", "body", string(body))
+
 	if _, _, err := deserializer().Decode(body, nil, &admReviewReq); err != nil {
 		m.logger.Errorw("Error to decode adminssion request", "err", err)
 
@@ -87,6 +92,8 @@ func (m *Mutate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
+	m.logger.Debugw("Admission review request", "request", admReviewReq)
 
 	admReviewResp.Response = m.mutate(admReviewReq.Request)
 
@@ -99,6 +106,8 @@ func (m *Mutate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
+	m.logger.Debugw("Admission review response", "response", resp)
 
 	if _, err := w.Write(resp); err != nil {
 		m.logger.Errorw("Error while writing response", "err", err)
@@ -127,7 +136,7 @@ func (m *Mutate) mutate(req *v1.AdmissionRequest) *v1.AdmissionResponse {
 		UID:     req.UID,
 	}
 
-	m.logger.Debugw("Checking if a container should be inject...")
+	m.logger.Infow("Checking if a container should be inject...")
 
 	inject, err := needInject(&pod)
 	if err != nil {
@@ -136,7 +145,7 @@ func (m *Mutate) mutate(req *v1.AdmissionRequest) *v1.AdmissionResponse {
 		return resp
 	}
 
-	m.logger.Debugw("Checking namespaces...")
+	m.logger.Infow("Checking namespaces...")
 
 	if pos := utils.SliceFindElemStr(ignoredNamespaces, req.Namespace); pos >= 0 {
 		err := fmt.Errorf("error with request namespace: cannot inject into system namespaces: %s", req.Namespace)
@@ -161,6 +170,7 @@ func (m *Mutate) mutate(req *v1.AdmissionRequest) *v1.AdmissionResponse {
 		return admissionError(err)
 	}
 
+	m.loggerInfow("Sending patches to update Pod...")
 	resp.Patch = patch
 	patchType := v1.PatchTypeJSONPatch
 	resp.PatchType = &patchType
