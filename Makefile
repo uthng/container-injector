@@ -37,8 +37,8 @@ PROJECT_BUILD_OSARCH = darwin/amd64 linux/amd64
 PROJECT_BUILD_TARGET = container-injector
 
 # Docker image
-DOCKER_REPO = docker.io/uthng
-DOCKER_IMAGE_TAG = latest
+DOCKER_REPO ?= docker.io/uthng
+DOCKER_IMAGE_TAG ?= latest
 
 all: clean build
 

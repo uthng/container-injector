@@ -1,27 +1,28 @@
 package sidecar
 
 const (
-	// AnnotationContainerStatus is the key of the annotation that is added to
+	// AnnotationContainerStatus is the annotation that is added to
 	// a pod after an injection is done.
-	// There's only one valid status we care about: "injected".
+	// The value must be "injected".
 	AnnotationContainerStatus = "container-injector.uthng.me/status"
 
-	// AnnotationContainerInject is the key of the annotation that controls whether
-	// injection is explicitly enabled or disabled for a pod. This should
-	// be set to a true or false value, as parseable by strconv.ParseBool
+	// AnnotationContainerInject controls whether injection is explicitly
+	// enabled or disabled for a pod. This should be set to a true or false value,
+	// as parseable by strconv.ParseBool
 	AnnotationContainerInject = "container-injector.uthng.me/inject"
 
-	// AnnotationContainerName is the name of the  docker image to use.
+	// AnnotationContainerName is the name of the injected container.
 	AnnotationContainerName = "container-injector.uthng.me/name"
 
 	// AnnotationContainerImage is the name of the  docker image to use.
 	AnnotationContainerImage = "container-injector.uthng.me/image"
 
-	// AnnotationContainerCommand is the command to be executed when the container starts
+	// AnnotationContainerCommand specifies the command to be executed
+	// when the container starts.
 	AnnotationContainerCommand = "container-injector.uthng.me/command"
 
 	// AnnotationContainerArgs is the list of arguments for the command
-	// to be executed when the container starts
+	// to be executed when the container starts.
 	AnnotationContainerArgs = "container-injector.uthng.me/args"
 
 	// AnnotationContainerInitContainer makes the initialization container the first container
